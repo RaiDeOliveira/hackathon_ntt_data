@@ -1,0 +1,15 @@
+mqtt:
+  broker_address: ""
+  broker_port: 
+  topic: ""
+  client_id: ""
+  username: ""
+  password: ""
+  keep_alive: 60
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true
+  debug: true
+  title: "Lion API"
