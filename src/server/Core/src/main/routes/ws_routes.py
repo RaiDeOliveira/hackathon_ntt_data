@@ -2,14 +2,14 @@ from fastapi import APIRouter, WebSocket
 import logging
 from src.websocket.websocket_manager import WebSocketManager
 
-ws_router = APIRouter(
+router = APIRouter(
   prefix="/ws",
   tags=["WebSocket"]
 )
 
 websocket_manager = WebSocketManager()
 
-@ws_router.websocket("/")
+@router.websocket("/")
 async def websocket_endpoint(websocket: WebSocket):
   await websocket_manager.connect(websocket)
   try:
