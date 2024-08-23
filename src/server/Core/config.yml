@@ -3,8 +3,6 @@ mqtt:
   broker_port: 
   topic: ""
   client_id: ""
-  username: ""
-  password: ""
   keep_alive: 60
 
 api:
