@@ -4,7 +4,7 @@ import uvicorn
 import logging
 
 from src.config.settings import config
-from src.service.mqtt_service import client
+from src.service.mqtt_service import start_mqtt
 from src.websocket.websocket_manager import WebSocketManager
 from src.main.server.server import router
 
@@ -22,7 +22,7 @@ app = FastAPI(
 @app.on_event("startup")
 def on_startup() -> None:
   logger.info("Starting MQTT...")
-  client.loop_start()
+  start_mqtt()
   
 if server_config["debug"]:
   origins = ["*"]

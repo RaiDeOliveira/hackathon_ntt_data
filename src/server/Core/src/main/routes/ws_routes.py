@@ -1,20 +1,19 @@
 from fastapi import APIRouter, WebSocket
 import logging
-from src.websocket.websocket_manager import WebSocketManager
+from src.websocket.websocket_manager import websocket_manager
 
 router = APIRouter(
   prefix="/ws",
   tags=["WebSocket"]
 )
 
-websocket_manager = WebSocketManager()
-
 @router.websocket("/")
 async def websocket_endpoint(websocket: WebSocket):
   await websocket_manager.connect(websocket)
   try:
     while True:
-      await websocket.receive_text()
+      data = await websocket.receive_text()
+      await websocket_manager.send_personal_message(data, websocket)
   except Exception as e:
     logging.exception(f"WebSocket error: {str(e)}")
   finally:
