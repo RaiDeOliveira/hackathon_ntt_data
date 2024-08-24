@@ -10,7 +10,7 @@
 const char* ssid = "sugarzero";      // Insira o SSID do seu Wi-Fi
 const char* password = "sugarzero"; // Insira a senha do seu Wi-Fi
 const char* mqtt_server = "mqtt-dashboard.com"; // Host do Broker MQTT
-const char* mqtt_topic = "testtopic/1"; // Tópico para publicar
+const char* mqtt_topic = "daddyLion"; // Tópico para publicar
 const char* mqtt_client_id = "client-id-sugarzero"; // Client ID
 
 WiFiClient espClient;
