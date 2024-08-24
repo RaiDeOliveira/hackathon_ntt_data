@@ -1,8 +1,8 @@
 mqtt:
-  broker_address: ""
-  broker_port: 
-  topic: ""
-  client_id: ""
+  broker_address: "mqtt-dashboard.com"
+  broker_port: 8884
+  topic: "testLion"
+  client_id: "clientId-4FqUYlMIa2"
   keep_alive: 60
 
 api:
