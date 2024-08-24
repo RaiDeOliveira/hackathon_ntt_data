@@ -1,0 +1,13 @@
+mqtt:
+  broker_address: "mqtt-dashboard.com"
+  broker_port: 8884
+  topic: "testLion"
+  client_id: "clientId-4FqUYlMIa2"
+  keep_alive: 60
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true
+  debug: true
+  title: "Lion API"
