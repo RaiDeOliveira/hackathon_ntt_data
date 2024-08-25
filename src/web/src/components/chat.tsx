@@ -10,16 +10,12 @@ export const Chat: React.FC = () => {
   const handleSendMessage = async () => {
     if (input.trim() === '') return;
 
-    // Adiciona a mensagem do usuário
     const userMessage = { text: input, sender: 'user' as const };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setInput('');
 
     try {
-      // Aguarda a resposta do backend
       const botResponse = await ChatResponse(input);
-
-      // Adiciona a mensagem do bot
       setMessages((prevMessages) => [
         ...prevMessages,
         { text: botResponse, sender: 'bot' as const },
@@ -29,7 +25,6 @@ export const Chat: React.FC = () => {
     }
   };
 
-  // Auto-scroll para o fim do chat quando uma nova mensagem for adicionada
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -40,7 +35,7 @@ export const Chat: React.FC = () => {
     <div className="flex flex-col h-[600px] max-w-[500px] w-full mx-auto bg-white shadow-lg rounded-lg">
       <div
         ref={chatContainerRef}
-        className="flex-grow p-4 overflow-auto"
+        className="flex-grow p-4 overflow-y-scroll scrollbar-hide"
       >
         {messages.map((msg, idx) => (
           <Message key={idx} text={msg.text} sender={msg.sender} />
