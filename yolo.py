@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 import torch
 from torchvision import transforms
+from flask import Flask, jsonify
+
+app = Flask(__name__)
 
 # Carregar os nomes das classes
 with open('coco.names', 'r') as f:
