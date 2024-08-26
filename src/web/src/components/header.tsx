@@ -7,7 +7,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ toggleChat }) => {
   return (
-    <header className="w-full bg-zinc-800 p-4 flex justify-between items-center shadow-md fixed top-0 left-0 z-40">
+    <header className="w-full bg-zinc-950 p-4 flex justify-between items-center shadow-md fixed top-0 left-0 z-40">
       {/* Logo à esquerda */}
       <div className="flex-shrink-0">
         <img src="/icon.jpg" alt="Logo" className="h-16 w-auto" />
