@@ -1,7 +1,11 @@
+import json
 import paho.mqtt.client as paho
 from paho import mqtt
 import asyncio
 from src.websocket.websocket_manager import websocket_manager
+from src.models.repository.sensor_repository import SensorRepository
+
+sensor_repository = SensorRepository()
 
 def on_connect(client, userdata, flags, rc, properties=None):
     print("CONNACK received with code %s." % rc)
@@ -16,7 +20,16 @@ def on_message(client, userdata, msg):
     print(msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
     message = msg.payload.decode('utf-8')
 
-    asyncio.run(websocket_manager.broadcast(message))
+    try:
+        sensor_data = json.loads(message)
+        sensor_repository.insert_sensor(sensor_data)
+        
+        loop = asyncio.get_event_loop()
+        loop.create_task(websocket_manager.broadcast(message))
+    except json.JSONDecodeError:
+        print("Error decoding JSON")
+    except Exception as e:
+        print(f"Error processing message: {e}")
 
 def start_mqtt():
     client = paho.Client(client_id="", userdata=None, protocol=paho.MQTTv5)
