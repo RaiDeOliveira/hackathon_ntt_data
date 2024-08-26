@@ -1,10 +1,25 @@
-export function Home() {
+import React, { useState } from 'react';
+import { Chat } from '../components/chat';
+import { Header } from '../components/header'; 
+
+export const Home: React.FC = () => {
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
+  const toggleChat = () => {
+    setIsChatOpen(!isChatOpen);
+  };
+
   return (
-    <div className="h-screen flex items-center justify-center">
-      <div className="flex flex-col items-center">
-        <h1 className="text-4xl font-bold mb-4">Bem-vindos ao Lion Guardians 🦁</h1>
-        <p className="text-lg">Vamos ver como anda o seu ambiente de trabalho</p>
-      </div>
+    <div className="relative min-h-screen pt-16"> 
+      <Header
+        toggleChat={toggleChat}
+      />
+
+      {isChatOpen && (
+        <div className="fixed top-16 right-4 z-50 pt-4">
+          <Chat />
+        </div>
+      )}
     </div>
   );
-}
+};

@@ -32,7 +32,7 @@ export const Chat: React.FC = () => {
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-[600px] max-w-[500px] w-full mx-auto bg-white shadow-lg rounded-lg">
+    <div className="flex flex-col h-[550px] w-[400px] bg-white shadow-lg rounded-lg">
       <div
         ref={chatContainerRef}
         className="flex-grow p-4 overflow-y-scroll scrollbar-hide"
@@ -47,7 +47,7 @@ export const Chat: React.FC = () => {
           className="w-full p-2 border text-black rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-500"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Type your message..."
+          placeholder="Digite a sua mensagem..."
           onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
         />
       </div>
