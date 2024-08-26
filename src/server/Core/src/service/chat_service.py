@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 import os
 
-from src.repository.chat_repository import ChatRepository
+from src.models.repository.chat_repository import ChatRepository
 
 load_dotenv()
 api_key = os.getenv("GEMINI_API_KEY")

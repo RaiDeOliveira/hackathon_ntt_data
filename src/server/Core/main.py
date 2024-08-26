@@ -3,6 +3,7 @@ from starlette.middleware.cors import CORSMiddleware
 import uvicorn
 import logging
 
+from src.models.settings.connection import db_connection_handler
 from src.config.settings import config
 from src.service.mqtt_service import start_mqtt
 from src.websocket.websocket_manager import WebSocketManager
@@ -13,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 server_config = config["api"]
 websocket_manager = WebSocketManager()
+
+db_connection_handler.connect_to_db()
 
 app = FastAPI(
   debug=bool(server_config["debug"]),
