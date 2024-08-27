@@ -8,11 +8,11 @@ type ChartProps = {
   labels: string[];
   label: string;
   color: string;
-  limit?: number; // Adiciona uma prop para definir o limite de variáveis
+  limit?: number;
 };
 
 const Chart: React.FC<ChartProps> = ({ data, labels, label, color, limit = 20 }) => {
-  // Trunca os dados e labels de acordo com o limite
+
   const truncatedData = data.slice(-limit);
   const truncatedLabels = labels.slice(-limit);
 
@@ -23,7 +23,7 @@ const Chart: React.FC<ChartProps> = ({ data, labels, label, color, limit = 20 })
         label,
         data: truncatedData,
         borderColor: color,
-        backgroundColor: `${color}33`, // Translucent color
+        backgroundColor: `${color}33`, 
         fill: true,
         pointBorderWidth: 0
       },
