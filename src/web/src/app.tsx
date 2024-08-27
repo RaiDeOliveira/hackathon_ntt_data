@@ -1,8 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Home } from './pages/home'
-import { Temperature } from './pages/temperature'
-import { ChatPage } from './pages/chatPage'
-import Video from './pages/video'
+import { VideoFeed } from './pages/video'
 
 const router = createBrowserRouter([
   {
@@ -10,16 +8,8 @@ const router = createBrowserRouter([
     element: <Home />
   },
   {
-    path: '/chat',
-    element: <ChatPage />
-  },
-  {
-    path: '/temperature',
-    element: <Temperature />
-  },
-  {
     path: '/video',
-    element: <Video />
+    element: <VideoFeed />
   }
 ])  
 

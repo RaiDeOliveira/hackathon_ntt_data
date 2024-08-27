@@ -1,4 +1,4 @@
-const WS_URL = 'ws://127.0.0.1:8000/api/ws/';
+const WS_URL = 'ws://localhost:8000/api/ws/';
 
 export const createWebSocketConnection = () => {
   const ws = new WebSocket(WS_URL);
