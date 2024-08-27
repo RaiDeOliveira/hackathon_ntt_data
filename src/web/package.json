@@ -20,8 +20,7 @@
     "react-router-dom": "^6.26.0",
     "react-use-websocket": "^3.0.0",
     "remark-gfm": "^4.0.0",
-    "ws": "^8.18.0"
-    "remark-gfm": "^4.0.0"
+    "ws": "^8.18.0",
     "socket.io-client": "^4.7.5"
   },
   "devDependencies": {
