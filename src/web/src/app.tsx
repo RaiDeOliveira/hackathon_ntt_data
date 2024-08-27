@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Home } from './pages/home'
-import { Temperature } from './pages/temperature'
+import { Chart } from './components/chart'
 
 const router = createBrowserRouter([
   {
@@ -8,8 +8,9 @@ const router = createBrowserRouter([
     element: <Home />
   },
   {
-    path: '/temperature',
-    element: <Temperature />
+    path: '/charts',
+    element: <Chart />
+
   }
 ])  
 

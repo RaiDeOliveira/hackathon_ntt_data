@@ -10,7 +10,7 @@ export const Header: React.FC<HeaderProps> = ({ toggleChat }) => {
     <header className="w-full bg-zinc-950 p-4 flex justify-between items-center shadow-md fixed top-0 left-0 z-40">
       {/* Logo à esquerda */}
       <div className="flex-shrink-0">
-        <img src="/icon.jpg" alt="Logo" className="h-16 w-auto" />
+        <img src="/icon.png" alt="Logo" className="h-16 w-auto" />
       </div>
 
       {/* Texto central */}

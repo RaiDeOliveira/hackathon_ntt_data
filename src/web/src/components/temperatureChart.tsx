@@ -1,66 +1,57 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { SingleValueChart } from './singleValueChart';
-import { createWebSocketConnection, receiveMessage } from '../services/webSocket';
+import useWebSocket from 'react-use-websocket';
 
 export const TemperatureChart: React.FC = () => {
     const [temperature, setTemperature] = useState<number | null>(null);
     const [humidity, setHumidity] = useState<number | null>(null);
 
-    useEffect(() => {
-        const initWebSocket = async () => {
+    useWebSocket('ws://localhost:8000/api/ws/', {
+        onMessage: (event) => {
+            const message = event.data;
+            // Processar a mensagem recebida
             try {
-            const ws = await createWebSocketConnection();
-            console.log('WebSocket connected');
-
-            while (true) {
-                try {
-                const message = await receiveMessage(ws);
-                
-                // Processar a mensagem recebida
-                const jsonString = message.replace(/.*?b'/, '').replace(/'$/, '');
-                const data = JSON.parse(jsonString);
+                const data = JSON.parse(message);
+                console.log('Parsed data:', data);
 
                 setTemperature(data.temperature);
                 setHumidity(data.humidity);
-                } catch (error) {
-                console.error('Error processing WebSocket message:', error);
-                }
-            }
             } catch (error) {
-            console.error('Failed to connect to WebSocket:', error);
+                console.error('Error parsing WebSocket message:', error);
             }
-        };
+        },
+        onError: (error) => {
+            console.error('Error processing WebSocket message:', error);
+        },
+    });
 
-        initWebSocket();
-    }, []);
-
-    const calculateWetBulb = () => {
+    const calculateWetBulb = useCallback(() => {
         if (temperature !== null && humidity !== null) {
             const arctan = (x) => Math.atan(x);
             return (
-                temperature * arctan(0.151977 * Math.sqrt(humidity + 8.313659)) + 0.00391838 * Math.sqrt(Math.pow(humidity,3)) * arctan(0.023101 * humidity) - arctan(humidity - 1.676331) + arctan(temperature + humidity) - 4.686035
+                temperature * arctan(0.151977 * Math.sqrt(humidity + 8.313659)) + 0.00391838 * Math.sqrt(Math.pow(humidity, 3)) * arctan(0.023101 * humidity) - arctan(humidity - 1.676331) + arctan(temperature + humidity) - 4.686035
             );
         }
         return null;
-    };
+    }, [temperature, humidity]);
 
-    const calculateGlobeTemperature = () => {
+    const calculateGlobeTemperature = useCallback(() => {
         if (temperature !== null) {
             return (
                 0.456 + 1.0335 * temperature
             );
         }
         return null;
-    };
+    }, [temperature]);
 
-    const calculateIBUTG = () => {
+    const calculateIBUTG = useCallback(() => {
         if (temperature !== null && humidity !== null) {
             return (
                 0.7 * calculateWetBulb() + 0.3 * calculateGlobeTemperature()
             );
         }
         return null;
-    }
+    }, [temperature, humidity, calculateWetBulb, calculateGlobeTemperature]);
 
     return (
         <div className="flex flex-col gap-4">
