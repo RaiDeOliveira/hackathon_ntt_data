@@ -6,6 +6,8 @@ import json
 from src.websocket.websocket_manager import websocket_manager
 from src.models.repository.sensor_repository import SensorRepository
 from src.service.nota_service import NotaService
+from src.models.repository.quality_model_repository import QualityRepository
+
 
 router = APIRouter(
   prefix="/ws",
@@ -14,6 +16,7 @@ router = APIRouter(
 
 sensor_repository = SensorRepository()
 nota_service = NotaService()
+quality_repository = QualityRepository()
 
 @router.websocket("/")
 async def websocket_endpoint(websocket: WebSocket):
@@ -45,16 +48,14 @@ async def sensor_websocket_endpoint(websocket: WebSocket):
   finally:
     websocket_manager.disconnect(websocket)
 
-@router.websocket("/nota")
+@router.websocket("/Quality")
 async def nota_websocket_endpoint(websocket: WebSocket):
   await websocket_manager.connect(websocket)
-  
-  nota = await nota_service.get_nota()
-  
-  
   try:
     while True:
-      await websocket_manager.broadcast("Nota")
+      quality = quality_repository.get_all_quality()
+      quality_json = json.dumps(quality)
+      await websocket_manager.broadcast(quality_json)
       await asyncio.sleep(5)
   except WebSocketDisconnect:
     logging.info("Client disconnected")

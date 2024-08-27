@@ -66,7 +66,7 @@ def save_quality_data():
     current_noise = 50
     current_peopleNumber =None
     current_angle = {"braco": [], "cabeça": []}
-    quality_data = quality_repository.get_all_sensors()
+    quality_data = quality_repository.get_all_quality()
     if len(quality_data)>0:
         sensor_data = [ {"ibutg":calculate_ibutg(i["temperature"],i["humidity"]),"humidity":i["humidity"],"timestamp":i["timestamp"]} for i in sensor_repository.get_all_sensors() if i["timestamp"] > quality_data[-1]["timestamp"]]
         for data in sensor_data:
