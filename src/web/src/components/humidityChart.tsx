@@ -13,66 +13,42 @@ type SensorData = {
   timestamp: string;
 };
 
-export const TemperatureChart: React.FC = () => {
+export const HumidityChart: React.FC = () => {
   const [data, setData] = useState<SensorData[]>([]);
   const [chartData, setChartData] = useState<ChartData<'line'>>({
     labels: [],
     datasets: [
       {
-        label: 'Temperature (°C)',
+        label: 'Humidity (%)',
         data: [],
-        borderColor: '#f87171', // Tailwind red-400
-        backgroundColor: 'rgba(248, 113, 113, 0.2)',
+        borderColor: '#60a5fa', // Tailwind blue-400
+        backgroundColor: 'rgba(96, 165, 250, 0.2)',
+        fill: true,
         borderWidth: 2, // Make the border a bit thicker for clarity
         pointRadius: 0, // Hide the points for a cleaner look
-        fill: true,
       },
     ],
   });
 
   const chartOptions: ChartOptions<'line'> = {
     responsive: true,
-    maintainAspectRatio: false,
+    maintainAspectRatio: false, // Para evitar redimensionamento excessivo
     scales: {
       x: {
         display: true,
-        grid: {
-          display: false, // Hide grid lines for a cleaner look
-        },
         title: {
           display: true,
           text: 'Hora',
-          color: '#9ca3af', // Tailwind gray-400
-        },
-        ticks: {
-          color: '#9ca3af', // Tailwind gray-400
         },
       },
       y: {
         display: true,
         title: {
           display: true,
-          text: 'Temperature (°C)',
-          color: '#9ca3af', // Tailwind gray-400
+          text: 'Humidity (%)',
         },
-        ticks: {
-          color: '#9ca3af', // Tailwind gray-400
-        },
-      },
-    },
-    plugins: {
-      legend: {
-        display: true,
-        labels: {
-          color: '#9ca3af', // Tailwind gray-400
-        },
-      },
-      tooltip: {
-        backgroundColor: '#f9fafb', // Tailwind gray-50 for tooltip background
-        titleColor: '#374151', // Tailwind gray-700 for tooltip text
-        bodyColor: '#6b7280', // Tailwind gray-600 for tooltip body
-        borderColor: '#e5e7eb', // Tailwind gray-200 for tooltip border
-        borderWidth: 1, // Border width for tooltip
+        min: 0, // Ajuste conforme o seu caso
+        max: 100, 
       },
     },
   };
@@ -98,7 +74,7 @@ export const TemperatureChart: React.FC = () => {
           }),
           datasets: prevChartData.datasets.map((dataset) => ({
             ...dataset,
-            data: newData.map(item => item.temperature),
+            data: newData.map(item => item.humidity),
           })),
         }));
 
