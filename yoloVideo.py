@@ -1,82 +1,121 @@
-from flask import Flask
-from flask_socketio import SocketIO, emit
-from ultralytics import YOLO
 import cv2
+import mediapipe as mp
+import math
 import base64
 import io
 import sys
+import asyncio
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from ultralytics import YOLO
+from starlette.websockets import WebSocketState
+import time
 
-app = Flask(__name__)
-socketio = SocketIO(app, cors_allowed_origins="*")
+# Funções para cálculo da postura
+def calculate_angle(a, b, c):
+    ab = [a[0] - b[0], a[1] - b[1]]
+    bc = [c[0] - b[0], c[1] - b[1]]
+    
+    dot_product = ab[0] * bc[0] + ab[1] * bc[1]
+    magnitude_ab = math.sqrt(ab[0] ** 2 + ab[1] ** 2)
+    magnitude_bc = math.sqrt(bc[0] ** 2 + bc[1] ** 2)
+    
+    angle = math.degrees(math.acos(dot_product / (magnitude_ab * magnitude_bc)))
+    return angle
 
-# Carregar o modelo YOLO
+def calculate_head_angle(head, left_shoulder, right_shoulder):
+    shoulder_line = [right_shoulder[0] - left_shoulder[0], right_shoulder[1] - left_shoulder[1]]
+    head_vector = [head[0] - left_shoulder[0], head[1] - left_shoulder[1]]
+    
+    dot_product = shoulder_line[0] * head_vector[0] + shoulder_line[1] * head_vector[1]
+    magnitude_shoulder_line = math.sqrt(shoulder_line[0] ** 2 + shoulder_line[1] ** 2)
+    magnitude_head_vector = math.sqrt(head_vector[0] ** 2 + head_vector[1] ** 2)
+    
+    angle = math.degrees(math.acos(dot_product / (magnitude_shoulder_line * magnitude_head_vector)))
+    return angle
+
+# YOLO model
 model = YOLO("model.pt")
 
-def capture_logs(frame):
-    # Crie um buffer de StringIO para capturar stdout
+# Inicializar o MediaPipe para detecção de múltiplas poses (BlazePose)
+mp_pose = mp.solutions.pose
+mp_drawing = mp.solutions.drawing_utils
+
+app = FastAPI()
+
+async def capture_logs(frame):
     log_capture_string = io.StringIO()
     sys.stdout = log_capture_string
-    
-    # Fazer a predição com o YOLO (isto vai gerar logs no stdout)
     results = model.predict(source=frame)
-    
-    # Restaurar stdout original
     sys.stdout = sys.__stdout__
-
-    # Capturar o conteúdo dos logs
     logs = log_capture_string.getvalue()
-
     return logs, results
 
-def generate_video_feed():
+async def generate_video_feed(websocket: WebSocket):
     cap = cv2.VideoCapture(0)
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+    with mp_pose.Pose(static_image_mode=False, model_complexity=1, enable_segmentation=False, min_detection_confidence=0.5, min_tracking_confidence=0.5) as pose:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-        # Capture os logs e obtenha os resultados da predição
-        logs, results = capture_logs(frame)
+            # Fazer a predição YOLO
+            logs, results = await capture_logs(frame)
+            
+            # Converter a imagem para RGB e detectar poses com MediaPipe
+            rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            pose_results = pose.process(rgb_image)
+            
+            num_people = sum([1 for r in results[0].boxes.data if int(r[-1]) == 0])  # Classe 'person' tem o ID 0
+            posture = "No data"
 
-        # Filtrar as detecções para manter apenas pessoas (classe 0)
-        person_detections = [
-            r for r in results[0].boxes.data if int(r[-1]) == 0
-        ]
+            # Verificar se há poses detectadas
+            if pose_results.pose_landmarks:
+                h, w, _ = frame.shape
+                landmarks = pose_results.pose_landmarks.landmark
+                left_shoulder = (int(landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].x * w),
+                                 int(landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value].y * h))
+                right_shoulder = (int(landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].x * w),
+                                  int(landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value].y * h))
+                left_elbow = (int(landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].x * w),
+                              int(landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value].y * h))
+                left_wrist = (int(landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].x * w),
+                              int(landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value].y * h))
+                head = (int(landmarks[mp_pose.PoseLandmark.NOSE.value].x * w),
+                        int(landmarks[mp_pose.PoseLandmark.NOSE.value].y * h))
+                
+                arm_angle = calculate_angle(left_shoulder, left_elbow, left_wrist)
+                head_angle = calculate_head_angle(head, left_shoulder, right_shoulder)
+                shoulder_line_angle = calculate_angle(left_shoulder, right_shoulder, (left_shoulder[0] + 1, left_shoulder[1]))
+                head_posture = abs(head_angle - shoulder_line_angle)
+                
+                if 120 <= arm_angle <= 180 and head_posture < 40:
+                    posture = "Good posture"
+                else:
+                    posture = "Bad posture"
 
-        # Criar uma cópia do frame original para desenhar as detecções
-        annotated_frame = frame.copy()
+            # Desenhar as detecções no frame
+            annotated_frame = results[0].plot()
+            ret, buffer = cv2.imencode('.jpg', annotated_frame)
+            frame = buffer.tobytes()
+            frame_base64 = base64.b64encode(frame).decode('utf-8')
 
-        for r in person_detections:
-            # Desenhar a caixa delimitadora
-            x1, y1, x2, y2 = map(int, r[:4])
-            confidence = r[4]
-            label = "person"
+            # Enviar o frame, número de pessoas e postura via WebSocket
+            await websocket.send_json({
+                'frame': frame_base64,
+                'num_people': num_people,
+                'head_angle': head_angle,
+                'arm_angle': arm_angle,
+                'posture': posture
+            })
 
-            # Usar uma cor azul escura para a caixa e o texto
-            color = (139, 0, 0)  # RGB para azul escuro
-
-            cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), color, 2)
-            cv2.putText(annotated_frame, f"{label} {confidence:.2f}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-        # Converter o frame para JPEG
-        ret, buffer = cv2.imencode('.jpg', annotated_frame)
-        frame = buffer.tobytes()
-
-        # Codificar o frame em base64 para enviar via WebSocket
-        frame_base64 = base64.b64encode(frame).decode('utf-8')
-
-        # Contar o número de pessoas
-        num_people = len(person_detections)
-
-        # Enviar o frame e o número de pessoas via WebSocket
-        socketio.emit('video_feed', {'frame': frame_base64, 'num_people': num_people})
+            await asyncio.sleep(1)
 
     cap.release()
 
-@socketio.on('connect')
-def handle_connect():
-    # Inicia o envio do feed de vídeo quando o cliente se conecta
-    socketio.start_background_task(generate_video_feed)
-
-if __name__ == '__main__':
-    socketio.run(app, debug=True)
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        await generate_video_feed(websocket)
+    except WebSocketDisconnect:
+        print("Client disconnected")
