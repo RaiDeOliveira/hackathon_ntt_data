@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import io from 'socket.io-client';
-import
+import { SingleValueChart } from '../components/singleValueChart';
 
 function VideoFeed() {
   const [videoSrc, setVideoSrc] = useState(''); // Para armazenar o vídeo
@@ -25,12 +25,15 @@ function VideoFeed() {
   }, []);
 
   return (
-    <div>
-      <h1>Video Feed</h1>
-      {/* Exibe a contagem de pessoas na tela */}
-      <p>Number of people detected: {peopleCount}</p>
-      {/* Exibe o feed de vídeo */}
-      <img src={videoSrc} alt="Video feed" />
+    <div className='flex flex-col items-center justify-center min-h-screen p-4'>
+      <h1 className='text-3xl font-bold mb-4'>Video Feed</h1>
+      <div className='flex flex-col md:flex-row gap-6 items-center'>
+        <SingleValueChart title={"Pessoas Detectadas"} value={peopleCount} />
+        <div className='relative'>
+          <img src={videoSrc} alt="Video feed" className='rounded-lg shadow-lg' />
+          {/* Adicione uma borda ou sombra ao redor do vídeo, se desejar */}
+        </div>
+      </div>
     </div>
   );
 }
