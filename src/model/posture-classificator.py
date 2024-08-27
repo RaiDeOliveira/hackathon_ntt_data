@@ -14,7 +14,7 @@ def calculate_angle(a, b, c):
     angle = math.degrees(math.acos(dot_product / (magnitude_ab * magnitude_bc)))
     return angle
 
-# Função para detectar se a postura da cabeça está inclinada em relação aos ombros
+# Função para calcular o alinhamento da cabeça em relação aos ombros
 def calculate_head_angle(head, left_shoulder, right_shoulder):
     shoulder_line = [right_shoulder[0] - left_shoulder[0], right_shoulder[1] - left_shoulder[1]]
     head_vector = [head[0] - left_shoulder[0], head[1] - left_shoulder[1]]
@@ -50,94 +50,47 @@ with mp_pose.Pose(static_image_mode=False, model_complexity=1, enable_segmentati
         if results.pose_landmarks:
             h, w, _ = frame.shape
 
-            # Se houver apenas uma pessoa detectada, results.pose_landmarks não é uma lista
-            if isinstance(results.pose_landmarks, list):
-                # Iterar sobre todas as poses detectadas
-                for landmarks in results.pose_landmarks:
-                    # Desenhar landmarks e conexões da pose detectada para cada pessoa
-                    mp_drawing.draw_landmarks(frame, landmarks, mp_pose.POSE_CONNECTIONS)
+            # Se houver apenas uma pessoa detectada
+            landmarks = results.pose_landmarks.landmark
+            mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
 
-                    # Função auxiliar para converter coordenadas
-                    def get_coords(landmark, w, h):
-                        return int(landmark.x * w), int(landmark.y * h)
+            # Função auxiliar para converter coordenadas
+            def get_coords(landmark, w, h):
+                return int(landmark.x * w), int(landmark.y * h)
 
-                    # Coletar coordenadas de ombros, cotovelos, pulso e cabeça
-                    try:
-                        landmarks = landmarks.landmark
-                        left_shoulder = get_coords(landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value], w, h)
-                        right_shoulder = get_coords(landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value], w, h)
-                        left_elbow = get_coords(landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value], w, h)
-                        left_wrist = get_coords(landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value], w, h)
-                        head = get_coords(landmarks[mp_pose.PoseLandmark.NOSE.value], w, h)
+            # Coletar coordenadas de ombros, cotovelos, punho e cabeça
+            try:
+                left_shoulder = get_coords(landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value], w, h)
+                right_shoulder = get_coords(landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value], w, h)
+                left_elbow = get_coords(landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value], w, h)
+                left_wrist = get_coords(landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value], w, h)
+                head = get_coords(landmarks[mp_pose.PoseLandmark.NOSE.value], w, h)
 
-                        # Calcular o ângulo do braço esquerdo (ombro-cotovelo-pulso)
-                        arm_angle = calculate_angle(left_shoulder, left_elbow, left_wrist)
+                # Calcular o ângulo do braço esquerdo (ombro-cotovelo-punho)
+                arm_angle = calculate_angle(left_shoulder, left_elbow, left_wrist)
 
-                        # Calcular o ângulo da cabeça em relação à linha dos ombros
-                        head_angle = calculate_head_angle(head, left_shoulder, right_shoulder)
+                # Calcular o alinhamento da cabeça em relação à linha dos ombros
+                head_angle = calculate_head_angle(head, left_shoulder, right_shoulder)
 
-                        # Avaliar a postura com base nos ângulos calculados
-                        shoulder_line_angle = calculate_angle(left_shoulder, right_shoulder, (left_shoulder[0] + 1, left_shoulder[1]))
-                        head_posture = abs(head_angle - shoulder_line_angle)
+                # Avaliar a postura com base nos ângulos calculados
+                shoulder_line_angle = calculate_angle(left_shoulder, right_shoulder, (left_shoulder[0] + 1, left_shoulder[1]))
+                head_posture = abs(head_angle - shoulder_line_angle)
 
-                        # Critérios para boa postura
-                        if 120 <= arm_angle <= 180 and head_posture < 40:
-                            posture = "Good posture"
-                        else:
-                            posture = "Bad posture"
+                # Critérios para boa postura de ombros, cabeça e braço
+                if 120 <= arm_angle <= 160 and head_posture < 70 and shoulder_line_angle < 10:
+                    posture = "Good posture"
+                else:
+                    posture = "Bad posture"
 
-                        # Exibir ângulos e status da postura no frame
-                        cv2.putText(frame, f"Arm Angle: {arm_angle:.2f}", (left_shoulder[0] - 50, left_shoulder[1] - 20), 
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
-                        cv2.putText(frame, f"Head Angle: {head_angle:.2f}", (left_shoulder[0] - 50, left_shoulder[1] - 40), 
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
-                        cv2.putText(frame, posture, (left_shoulder[0] - 50, left_shoulder[1] - 60), 
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255) if posture == "Bad posture" else (0, 255, 0), 2, cv2.LINE_AA)
-                    except Exception as e:
-                        print(f"Error processing landmarks: {e}")
-
-            else:
-                # Se houver uma única pessoa detectada
-                landmarks = results.pose_landmarks.landmark
-                mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-
-                # Função auxiliar para converter coordenadas
-                def get_coords(landmark, w, h):
-                    return int(landmark.x * w), int(landmark.y * h)
-
-                # Coletar coordenadas de ombros, cotovelos, pulso e cabeça
-                try:
-                    left_shoulder = get_coords(landmarks[mp_pose.PoseLandmark.LEFT_SHOULDER.value], w, h)
-                    right_shoulder = get_coords(landmarks[mp_pose.PoseLandmark.RIGHT_SHOULDER.value], w, h)
-                    left_elbow = get_coords(landmarks[mp_pose.PoseLandmark.LEFT_ELBOW.value], w, h)
-                    left_wrist = get_coords(landmarks[mp_pose.PoseLandmark.LEFT_WRIST.value], w, h)
-                    head = get_coords(landmarks[mp_pose.PoseLandmark.NOSE.value], w, h)
-
-                    # Calcular o ângulo do braço esquerdo (ombro-cotovelo-pulso)
-                    arm_angle = calculate_angle(left_shoulder, left_elbow, left_wrist)
-
-                    # Calcular o ângulo da cabeça em relação à linha dos ombros
-                    head_angle = calculate_head_angle(head, left_shoulder, right_shoulder)
-
-                    # Avaliar a postura com base nos ângulos calculados
-                    shoulder_line_angle = calculate_angle(left_shoulder, right_shoulder, (left_shoulder[0] + 1, left_shoulder[1]))
-                    head_posture = abs(head_angle - shoulder_line_angle)
-
-                    # Critérios para boa postura
-                    if 120 <= arm_angle <= 180 and head_posture < 40:
-                        posture = "Good posture"
-                    else:
-                        posture = "Bad posture"
-
-                    # Exibir ângulos e status da postura no frame
-                    cv2.putText(frame, f"Arm Angle: {arm_angle:.2f}", (left_shoulder[0] - 50, left_shoulder[1] - 20), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
-                    cv2.putText(frame, f"Head Angle: {head_angle:.2f}", (left_shoulder[0] - 50, left_shoulder[1] - 40), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
-                    cv2.putText(frame, posture, (left_shoulder[0] - 50, left_shoulder[1] - 60), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255) if posture == "Bad posture" else (0, 255, 0), 2, cv2.LINE_AA)
-                except Exception as e:
-                    print(f"Error processing landmarks: {e}")
+                # Exibir ângulos e status da postura no frame
+                cv2.putText(frame, f"Arm Angle: {arm_angle:.2f}", (left_shoulder[0] - 50, left_shoulder[1] - 20), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
+                cv2.putText(frame, f"Head Angle: {head_angle:.2f}", (left_shoulder[0] - 50, left_shoulder[1] - 40), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1, cv2.LINE_AA)
+                cv2.putText(frame, posture, (left_shoulder[0] - 50, left_shoulder[1] - 60), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255) if posture == "Bad posture" else (0, 255, 0), 2, cv2.LINE_AA)
+            except Exception as e:
+                print(f"Error processing landmarks: {e}")
 
         # Mostrar o frame com os resultados
         cv2.imshow('Posture Detection - Multiple People', frame)
