@@ -4,6 +4,8 @@ from src.MathematicalModel.QualityIndex import QualityIndex
 from src.models.repository.quality_model_repository import QualityRepository
 from src.models.repository.sensor_repository import SensorRepository
 import math
+from src.websocket.websocket_client import get_websocket_client
+
 
 quality_repository = QualityRepository()
 sensor_repository = SensorRepository()
@@ -60,12 +62,12 @@ def calculate_ibutg(temperature,humidity):
         return 0.7 * calculateWetBulb(temperature,humidity) + 0.3 * calculateGlobeTemperature(temperature)
     else: 
         return None
-def save_quality_data():
+def calcule_and_save_quality_data(armAngle,headAngle,current_peopleNumber):
     CURRENT_AREA =20
     current_lux =500
     current_noise = 50
-    current_peopleNumber =None
-    current_angle = {"braco": [], "cabeça": []}
+    current_peopleNumber =current_peopleNumber
+    current_angle = {"braco":armAngle, "cabeça": headAngle}
     quality_data = quality_repository.get_all_quality()
     if len(quality_data)>0:
         sensor_data = [ {"ibutg":calculate_ibutg(i["temperature"],i["humidity"]),"humidity":i["humidity"],"timestamp":i["timestamp"]} for i in sensor_repository.get_all_sensors() if i["timestamp"] > quality_data[-1]["timestamp"]]
