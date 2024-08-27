@@ -2,7 +2,7 @@ class QualityIndex:
     def __init__(self, angulos_atuais, angulos_ideais, angulos_maximos, pesos_articulacoes,
                  ibtug_atual, ibtug_ideal, ibtug_max, peso_ibutg, ruido_atual, ruido_ideal, ruido_max, peso_ruido,
                  luminosidade_atual, luminosidade_ideal, luminosidade_max, peso_luminosidade,
-                 umidade_atual, umidade_ideal, umidade_max, peso_umidade,lotacao_atual, lotacao_ideal, lotacao_max, peso_lotacao):
+                 umidade_atual, umidade_ideal, umidade_max, peso_umidade,lotacao_atual, lotacao_ideal, lotacao_max, peso_lotacao,area_sala):
         """
         Inicializa a classe com os ângulos das articulações e o IBTUG.
         
@@ -35,10 +35,14 @@ class QualityIndex:
         self.umidade_ideal = umidade_ideal
         self.umidade_max = umidade_max
         self.peso_umidade = peso_umidade
-        self.lotacao_atual = lotacao_atual
-        self.lotacao_ideal = lotacao_ideal
         self.lotacao_max = lotacao_max
         self.peso_lotacao = peso_lotacao
+        self.area_sala = area_sala  # Área total da sala em m²
+        self.n_pessoas = lotacao_atual  # Número de pessoas na sala
+        self.e_ideal = lotacao_ideal  # Espaço ideal por pessoa em m²
+        self.e_min = 5  # Espaço mínimo aceitável por pessoa em m²
+        self.e_max = lotacao_max  # Espaço máximo aceitável por pessoa em m²
+    
 
     def calcular_penalidade_articulacao(self, angulo_atual, angulo_ideal, angulo_maximo):
         """
@@ -113,14 +117,24 @@ class QualityIndex:
             penalidade = 0
         return penalidade
 
-    def calcular_penalidade_lotacao(self):
-        if self.lotacao_atual <= self.lotacao_ideal:
-            penalidade = 0
-        elif self.lotacao_atual <= self.lotacao_max:
-            penalidade = ((self.lotacao_atual - self.lotacao_ideal) / (self.lotacao_max - self.lotacao_ideal)) ** 2
-        else:
-            penalidade = 1
-        return penalidade
+    def calcular_espaco_por_pessoa(self):
+        return self.area_sala / self.n_pessoas
+    
+    def penalidade_superlotacao(self, espaco_por_pessoa):
+        if espaco_por_pessoa < self.e_min:
+            return ((self.e_min - espaco_por_pessoa) / self.e_min) ** 2
+        return 0
+    
+    def penalidade_sublotacao(self, espaco_por_pessoa):
+        if espaco_por_pessoa > self.e_max:
+            return ((espaco_por_pessoa - self.e_max) / self.e_max) ** 2
+        return 0
+    
+    def penalidade_total_lotacao(self):
+        espaco_por_pessoa = self.calcular_espaco_por_pessoa()
+        penalidade_super = self.penalidade_superlotacao(espaco_por_pessoa)
+        penalidade_sub = self.penalidade_sublotacao(espaco_por_pessoa)
+        return penalidade_super + penalidade_sub
 
 
 
@@ -164,7 +178,7 @@ class QualityIndex:
         penalidade_ruido = self.calcular_penalidade_ruido() * self.peso_ruido
         penalidade_luminosidade = self.calcular_penalidade_luminosidade() * self.peso_luminosidade
         penalidade_umidade = self.calcular_penalidade_umidade() * self.peso_umidade
-        penalidade_lotacao = self.calcular_penalidade_lotacao() * self.peso_lotacao
+        penalidade_lotacao = self.penalidade_total_lotacao() * self.peso_lotacao
  
         penalidade_total = (penalidade_ergonomia + penalidade_ibutg + penalidade_ruido + 
                             penalidade_luminosidade + penalidade_umidade+penalidade_lotacao)
@@ -173,7 +187,7 @@ class QualityIndex:
         
         return penalidade_total / peso_total if peso_total != 0 else 0
 # Definição dos parâmetros para o teste
-angulos_atuais = {"braco": [10], "cabeça": [5]}
+angulos_atuais = {"braco": [19], "cabeça": [9]}
 angulos_ideais = {"braco": 20, "cabeça": 10}
 angulos_maximos = {"braco": 45, "cabeça": 25}
 pesos_articulacoes = {"braco": 0.2, "cabeça": 0.2}
@@ -184,30 +198,31 @@ ibtug_max = 30
 peso_ibutg = 0.2
 
 
-ruido_atual = 32
+ruido_atual = 45
 ruido_ideal = 50
 ruido_max = 85
 peso_ruido = 0.2
 
-luminosidade_atual = 333
+luminosidade_atual = 450
 luminosidade_ideal = 500
 luminosidade_max = 1000
 peso_luminosidade = 0.1
 
-umidade_atual = 22
+umidade_atual = 45
 umidade_ideal = 50
 umidade_max = 70
 peso_umidade = 0.1
 
-lotacao_atual = 3
+lotacao_atual = 10
 lotacao_ideal = 10
 lotacao_max = 20
 peso_lotacao = 0.1
+area_sala = 100
 
 quality_index = QualityIndex(angulos_atuais, angulos_ideais, angulos_maximos, pesos_articulacoes,
                              ibtug_atual, ibtug_ideal, ibtug_max, peso_ibutg, ruido_atual, ruido_ideal, ruido_max, peso_ruido,
                                       luminosidade_atual, luminosidade_ideal, luminosidade_max, peso_luminosidade,
-                                      umidade_atual, umidade_ideal, umidade_max, peso_umidade,lotacao_atual, lotacao_ideal, lotacao_max, peso_lotacao)
+                                      umidade_atual, umidade_ideal, umidade_max, peso_umidade,lotacao_atual, lotacao_ideal, lotacao_max, peso_lotacao,area_sala)
 
 
 # Cálculo do índice de qualidade
