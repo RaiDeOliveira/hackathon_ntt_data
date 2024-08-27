@@ -20,6 +20,7 @@ export const Home: React.FC = () => {
   const [sensorData, setSensorData] = useState<SensorData[]>([]);
   const [videoSrc, setVideoSrc] = useState(''); // Para armazenar o vídeo
   const [peopleCount, setPeopleCount] = useState(0); // Para armazenar a contagem de pessoas
+  const [postureValue, setPosture] = useState(0); // Para armazenar a postura
 
   useWebSocket("ws://localhost:8000/api/ws/sensor", {
     onOpen: () => console.log("WebSocket connection opened"),
@@ -41,23 +42,29 @@ export const Home: React.FC = () => {
     shouldReconnect: () => true, // Reconnect on close
   });
 
-  useEffect(() => {
-    // Conectar ao WebSocket do backend Flask
-    const socket = io('http://localhost:5000');
 
-    socket.on('video_feed', data => {
-      console.log(data.num_people);
-      // Atualiza o vídeo com o frame recebido
-      setVideoSrc(`data:image/jpeg;base64,${data.frame}`);
-      // Atualiza a contagem de pessoas
-      setPeopleCount(data.num_people);
-    });
+  useWebSocket('ws://localhost:8007/ws', {
+    onOpen: () => console.log("WebSocket connection opened"),
+    onClose: () => console.log("WebSocket connection closed"),
+    onMessage: (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log(data.num_people);
+        // Atualiza o vídeo com o frame recebido
+        setVideoSrc(`data:image/jpeg;base64,${data.frame}`);
+        // Atualiza a contagem de pessoas
+        setPeopleCount(data.num_people);
 
-    // Limpeza ao desmontar o componente
-    return () => {
-      socket.disconnect();
-    };
-  }, []);
+        const posture = data.posture;
+        setPosture(posture);
+
+      } catch (error) {
+        console.error("Error parsing WebSocket message:", error);
+      }
+    },
+    onError: (error) => console.error("WebSocket error:", error),
+    shouldReconnect: () => true, // Reconnect on close
+  });
 
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen);
@@ -93,12 +100,24 @@ export const Home: React.FC = () => {
         </div>
       )}
 
-      <div className='flex flex-col items-center justify-center min-h-screen p-4'>
-        <h1 className='text-3xl font-bold mb-4'>Video Feed</h1>
-        <div className='flex flex-col md:flex-row gap-6 items-center'>
-          <SingleValueChart title={"Pessoas Detectadas"} value={peopleCount} />
-          <div className='relative'>
-            <img src={videoSrc} alt="Video feed" className='rounded-lg shadow-lg' />
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <div className="flex flex-row gap-6 items-center justify-center w-full">
+          <div className="relative w-4/5 p-4 border border-gray-500 rounded-lg shadow-md">
+            <img src={videoSrc} alt="Video feed" className="rounded-lg shadow-lg w-full" />
+          </div>
+          <div className="flex flex-col justify-center p-4 border border-gray-500 rounded-lg shadow-md w-1/5">
+            <div className="flex flex-col gap-5">
+              <SingleValueChart title={"Pessoas Detectadas"} value={peopleCount} />
+              
+              <div className="p-4 border rounded-lg shadow-md bg-white text-black">
+                <h2 className="text-lg font-bold">Postura</h2>
+                <div className="text-4xl font-bold">
+                  {postureValue !== null ? `${postureValue}` : 'Loading...'}
+                </div>
+              </div>
+
+              <SingleValueChart title={"Qualidade do Escritório"} value={0} />
+            </div>
           </div>
         </div>
       </div>

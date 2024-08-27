@@ -67,6 +67,7 @@ async def generate_video_feed(websocket: WebSocket):
             
             num_people = sum([1 for r in results[0].boxes.data if int(r[-1]) == 0])  # Classe 'person' tem o ID 0
             posture = "No data"
+            head_angle, arm_angle = None, None  # Inicializar valores de ângulo
 
             # Verificar se há poses detectadas
             if pose_results.pose_landmarks:
@@ -83,6 +84,7 @@ async def generate_video_feed(websocket: WebSocket):
                 head = (int(landmarks[mp_pose.PoseLandmark.NOSE.value].x * w),
                         int(landmarks[mp_pose.PoseLandmark.NOSE.value].y * h))
                 
+                # Cálculos dos ângulos
                 arm_angle = calculate_angle(left_shoulder, left_elbow, left_wrist)
                 head_angle = calculate_head_angle(head, left_shoulder, right_shoulder)
                 shoulder_line_angle = calculate_angle(left_shoulder, right_shoulder, (left_shoulder[0] + 1, left_shoulder[1]))
@@ -92,10 +94,19 @@ async def generate_video_feed(websocket: WebSocket):
                     posture = "Good posture"
                 else:
                     posture = "Bad posture"
+                
+                # Desenhar landmarks no frame
+                mp_drawing.draw_landmarks(
+                    frame,
+                    pose_results.pose_landmarks,
+                    mp_pose.POSE_CONNECTIONS,
+                    mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
+                    mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2)
+                )
 
             # Desenhar as detecções no frame
-            annotated_frame = results[0].plot()
-            ret, buffer = cv2.imencode('.jpg', annotated_frame)
+            annotated_frame = results[0].plot()  # Desenho da detecção YOLO
+            ret, buffer = cv2.imencode('.jpg', frame)  # Codificar o frame como imagem
             frame = buffer.tobytes()
             frame_base64 = base64.b64encode(frame).decode('utf-8')
 
@@ -108,7 +119,7 @@ async def generate_video_feed(websocket: WebSocket):
                 'posture': posture
             })
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(1)  # Pausa de 1 segundo entre os envios
 
     cap.release()
 
