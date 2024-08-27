@@ -71,8 +71,8 @@ def save_quality_data():
         sensor_data = [ {"ibutg":calculate_ibutg(i["temperature"],i["humidity"]),"humidity":i["humidity"],"timestamp":i["timestamp"]} for i in sensor_repository.get_all_sensors() if i["timestamp"] > quality_data[-1]["timestamp"]]
         for data in sensor_data:
              QIndex = calculate_Quality(current_angle,data["ibutg"],current_noise,data["humidity"],current_lux,current_peopleNumber,CURRENT_AREA)
-             ergonomics_index = QIndex.get_ErgonomicsIndex()
-             quality_index_value = QIndex.get_quality_index()
+             ergonomics_index = (1-QIndex.get_ErgonomicsIndex())*100
+             quality_index_value =(1-QIndex.get_quality_index())*100
              q_data = { "ibtug":data["ibutg"],"humidity":data["humidity"],
                        "lux":current_lux,
                        "noise":current_noise,
@@ -86,8 +86,8 @@ def save_quality_data():
         for data in sensor_data:
             quality_index = calculate_Quality(current_angle,data["ibutg"],current_noise,data["humidity"],current_lux,current_peopleNumber,CURRENT_AREA)
             QIndex = calculate_Quality(current_angle,data["ibutg"],current_noise,data["humidity"],current_lux,current_peopleNumber,CURRENT_AREA)
-            ergonomics_index = QIndex.get_ErgonomicsIndex()
-            quality_index_value = QIndex.get_quality_index()
+            ergonomics_index = (1-QIndex.get_ErgonomicsIndex())*100
+            quality_index_value = (1-QIndex.get_quality_index())*100
             q_data = { "ibtug":data["ibutg"],"humidity":data["humidity"],
                        "lux":current_lux,
                        "noise":current_noise,
