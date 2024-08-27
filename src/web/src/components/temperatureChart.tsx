@@ -1,73 +1,119 @@
-import React, { useState, useEffect } from 'react';
-import { SingleValueChart } from './singleValueChart';
-import { createWebSocketConnection, receiveMessage } from '../services/webSocket';
+import React, { useState } from 'react';
+import { Line } from 'react-chartjs-2';
+import { ChartOptions, ChartData } from 'chart.js';
+import 'chart.js/auto';
+import useWebSocket from 'react-use-websocket';
+
+type SensorData = {
+  id: number;
+  temperature: number;
+  humidity: number;
+  lux: number;  // Ainda está no tipo, mas não será usado no gráfico
+  noise: number;
+  timestamp: string;
+};
 
 export const TemperatureChart: React.FC = () => {
-    const [temperature, setTemperature] = useState<number | null>(null);
-    const [humidity, setHumidity] = useState<number | null>(null);
+  const [data, setData] = useState<SensorData[]>([]);
+  const [chartData, setChartData] = useState<ChartData<'line'>>({
+    labels: [],
+    datasets: [
+      {
+        label: 'Temperature (°C)',
+        data: [],
+        borderColor: '#f87171', // Tailwind red-400
+        backgroundColor: 'rgba(248, 113, 113, 0.2)',
+        borderWidth: 2, // Make the border a bit thicker for clarity
+        pointRadius: 0, // Hide the points for a cleaner look
+        fill: true,
+      },
+    ],
+  });
 
-    useEffect(() => {
-        const initWebSocket = async () => {
-            try {
-            const ws = await createWebSocketConnection();
-            console.log('WebSocket connected');
+  const chartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        display: true,
+        grid: {
+          display: false, // Hide grid lines for a cleaner look
+        },
+        title: {
+          display: true,
+          text: 'Hora',
+          color: '#9ca3af', // Tailwind gray-400
+        },
+        ticks: {
+          color: '#9ca3af', // Tailwind gray-400
+        },
+      },
+      y: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Temperature (°C)',
+          color: '#9ca3af', // Tailwind gray-400
+        },
+        ticks: {
+          color: '#9ca3af', // Tailwind gray-400
+        },
+      },
+    },
+    plugins: {
+      legend: {
+        display: true,
+        labels: {
+          color: '#9ca3af', // Tailwind gray-400
+        },
+      },
+      tooltip: {
+        backgroundColor: '#f9fafb', // Tailwind gray-50 for tooltip background
+        titleColor: '#374151', // Tailwind gray-700 for tooltip text
+        bodyColor: '#6b7280', // Tailwind gray-600 for tooltip body
+        borderColor: '#e5e7eb', // Tailwind gray-200 for tooltip border
+        borderWidth: 1, // Border width for tooltip
+      },
+    },
+  };
 
-            while (true) {
-                try {
-                const message = await receiveMessage(ws);
-                
-                // Processar a mensagem recebida
-                const jsonString = message.replace(/.*?b'/, '').replace(/'$/, '');
-                const data = JSON.parse(jsonString);
+  useWebSocket('ws://localhost:8000/api/ws/sensor', {
+    onMessage: (event) => {
+      const receivedData: SensorData[] = JSON.parse(event.data);
+      console.log('Received WebSocket message:', ...receivedData);
 
-                setTemperature(data.temperature);
-                setHumidity(data.humidity);
-                } catch (error) {
-                console.error('Error processing WebSocket message:', error);
-                }
-            }
-            } catch (error) {
-            console.error('Failed to connect to WebSocket:', error);
-            }
-        };
+      // Atualize o estado dos dados
+      setData((prevData) => {
+        const newData = [...prevData, ...receivedData].slice(-25); // Mantém apenas os últimos 25 pontos de dados
 
-        initWebSocket();
-    }, []);
+        // Atualiza o gráfico diretamente
+        setChartData((prevChartData) => ({
+          ...prevChartData,
+          labels: newData.map(item => {
+            const date = new Date(item.timestamp);
+            return date.toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          }),
+          datasets: prevChartData.datasets.map((dataset) => ({
+            ...dataset,
+            data: newData.map(item => item.temperature),
+          })),
+        }));
 
-    const calculateWetBulb = () => {
-        if (temperature !== null && humidity !== null) {
-            const arctan = (x) => Math.atan(x);
-            return (
-                temperature * arctan(0.151977 * Math.sqrt(humidity + 8.313659)) + 0.00391838 * Math.sqrt(Math.pow(humidity,3)) * arctan(0.023101 * humidity) - arctan(humidity - 1.676331) + arctan(temperature + humidity) - 4.686035
-            );
-        }
-        return null;
-    };
+        return newData;
+      });
+    },
+  });
 
-    const calculateGlobeTemperature = () => {
-        if (temperature !== null) {
-            return (
-                0.456 + 1.0335 * temperature
-            );
-        }
-        return null;
-    };
-
-    const calculateIBUTG = () => {
-        if (temperature !== null && humidity !== null) {
-            return (
-                0.7 * calculateWetBulb() + 0.3 * calculateGlobeTemperature()
-            );
-        }
-        return null;
-    }
-
-    return (
-        <div className="flex flex-col gap-4">
-            <SingleValueChart title="Bulbo Seco" value={temperature || 0} />
-            <SingleValueChart title="Bulbo Úmido" value={calculateWetBulb() || 0} />
-            <SingleValueChart title="Termômetro de Globo" value={calculateGlobeTemperature() || 0} />
-            <SingleValueChart title="IBUTG" value={calculateIBUTG() || 0} />
-        </div>
-    );
+  return (
+    <div className="max-w-4xl mx-auto p-4 h-96"> {/* Adicione uma altura fixa */}
+      {data.length > 0 ? (
+        <Line data={chartData} options={chartOptions} />
+      ) : (
+        <p>Loading data...</p>
+      )}
+    </div>
+  );
 };
