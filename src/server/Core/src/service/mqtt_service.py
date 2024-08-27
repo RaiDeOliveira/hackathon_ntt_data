@@ -28,6 +28,8 @@ def on_message(client, userdata, msg):
         asyncio.run_coroutine_threadsafe(websocket_manager.broadcast(message), loop)
         sensor_data = json.loads(message)
         sensor_repository.insert_sensor(sensor_data)
+        loop = asyncio.get_event_loop()
+        loop.create_task(websocket_manager.broadcast(message))
 
     except json.JSONDecodeError:
         print("Error decoding JSON message")
