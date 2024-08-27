@@ -7,6 +7,7 @@ from src.websocket.websocket_manager import websocket_manager
 from src.models.repository.sensor_repository import SensorRepository
 from src.service.nota_service import NotaService
 from src.models.repository.quality_model_repository import QualityRepository
+from src.service.quality_model_service import calcule_and_save_quality_data
 
 
 router = APIRouter(
@@ -53,6 +54,8 @@ async def nota_websocket_endpoint(websocket: WebSocket):
   await websocket_manager.connect(websocket)
   try:
     while True:
+      
+      calcule_and_save_quality_data()
       quality = quality_repository.get_all_quality()
       quality_json = json.dumps(quality)
       await websocket_manager.broadcast(quality_json)
