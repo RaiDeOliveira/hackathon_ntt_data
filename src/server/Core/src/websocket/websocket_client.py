@@ -42,6 +42,5 @@ class WebSocketClient:
         return self.last_message
 
 
-# Função para retornar uma instância única (Singleton) de WebSocketClient
-def get_websocket_client(url: str = "ws://localhost:8000/ws") -> WebSocketClient:
+def get_websocket_client(url: str = "ws://localhost:8007/ws") -> WebSocketClient:
     return WebSocketClient(url)

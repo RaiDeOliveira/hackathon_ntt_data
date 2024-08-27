@@ -11,7 +11,6 @@ class NotaService:
   async def dados_camera_ws(self):
     return self.__ws_client.get_last_message()
 
-
   async def qualityIndex(self):
     camera_ws = await self.dados_camera_ws()
     camera_ws = json.loads(camera_ws)
