@@ -31,7 +31,6 @@ export function VideoFeed() {
         <SingleValueChart title={"Pessoas Detectadas"} value={peopleCount} />
         <div className='relative'>
           <img src={videoSrc} alt="Video feed" className='rounded-lg shadow-lg' />
-          {/* Adicione uma borda ou sombra ao redor do vídeo, se desejar */}
         </div>
       </div>
     </div>
