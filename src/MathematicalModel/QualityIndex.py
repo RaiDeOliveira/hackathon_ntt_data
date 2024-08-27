@@ -42,6 +42,8 @@ class QualityIndex:
         self.e_ideal = lotacao_ideal  # Espaço ideal por pessoa em m²
         self.e_min = 5  # Espaço mínimo aceitável por pessoa em m²
         self.e_max = lotacao_max  # Espaço máximo aceitável por pessoa em m²
+        self.ErgonomicsIndex =0
+        self.quality_index = 0
     
 
     def calcular_penalidade_articulacao(self, angulo_atual, angulo_ideal, angulo_maximo):
@@ -100,9 +102,12 @@ class QualityIndex:
         
         if soma_pesos_articulacoes == 0:
             return 0  # Se não há pesos, assume-se a menor penalidade possível
-        
-        return soma_penalidades_articulacoes / soma_pesos_articulacoes
-
+        self.ErgonomicsIndex = soma_penalidades_articulacoes / soma_pesos_articulacoes
+        return self.ErgonomicsIndex
+    
+    def get_ErgonomicsIndex(self):
+        return self.ErgonomicsIndex
+    
     def calcular_penalidade_ruido(self):
         """
         Calcula a penalidade para o nível de ruído.
@@ -184,15 +189,17 @@ class QualityIndex:
                             penalidade_luminosidade + penalidade_umidade+penalidade_lotacao)
         peso_total = (self.peso_ibutg + self.peso_ruido + 
                       self.peso_luminosidade + self.peso_umidade+self.peso_lotacao)
-        
-        return penalidade_total / peso_total if peso_total != 0 else 0
+        self.quality_index = penalidade_total / peso_total if peso_total != 0 else 0
+        return self.quality_index
+    def get_quality_index(self):
+        return self.quality_index
 # Definição dos parâmetros para o teste
 angulos_atuais = {"braco": [19], "cabeça": [9]}
 angulos_ideais = {"braco": 20, "cabeça": 10}
 angulos_maximos = {"braco": 45, "cabeça": 25}
 pesos_articulacoes = {"braco": 0.2, "cabeça": 0.2}
 
-ibtug_atual = 19
+ibtug_atual = 19    
 ibtug_ideal = 20
 ibtug_max = 30
 peso_ibutg = 0.2
@@ -228,3 +235,5 @@ quality_index = QualityIndex(angulos_atuais, angulos_ideais, angulos_maximos, pe
 # Cálculo do índice de qualidade
 indice_qualidade = quality_index.calcular_indice_qualidade()
 print(f"Índice de Qualidade do Ambiente de Trabalho: {indice_qualidade:.4f}")
+print(f"Índice de Qual/: {quality_index.get_quality_index():.4f}")
+print(f"Índice de Ergo Qual/: {quality_index.get_ErgonomicsIndex():.4f}")
