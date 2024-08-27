@@ -1,6 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { Home } from './pages/home'
-import Video from './pages/video'
+import { VideoFeed } from './pages/video'
 
 const router = createBrowserRouter([
   {
@@ -9,7 +9,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/video',
-    element: <Video />
+    element: <VideoFeed />
   }
 ])  
 

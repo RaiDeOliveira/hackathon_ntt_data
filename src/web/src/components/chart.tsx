@@ -25,6 +25,7 @@ const Chart: React.FC<ChartProps> = ({ data, labels, label, color, limit = 20 })
         borderColor: color,
         backgroundColor: `${color}33`, // Translucent color
         fill: true,
+        pointBorderWidth: 0
       },
     ],
   };
@@ -51,7 +52,7 @@ const Chart: React.FC<ChartProps> = ({ data, labels, label, color, limit = 20 })
   };
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-56">
       <Line data={chartData} options={chartOptions} />
     </div>
   );

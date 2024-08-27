@@ -54,7 +54,7 @@ export const Temperature: React.FC = () => {
     }, [temperature, humidity, calculateWetBulb, calculateGlobeTemperature]);
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-5">
             <SingleValueChart title="Bulbo Seco" value={temperature || 0} />
             <SingleValueChart title="Bulbo Úmido" value={calculateWetBulb() || 0} />
             <SingleValueChart title="Termômetro de Globo" value={calculateGlobeTemperature() || 0} />

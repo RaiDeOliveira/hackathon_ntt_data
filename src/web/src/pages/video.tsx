@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import io from 'socket.io-client';
-import
 
-function VideoFeed() {
+export function VideoFeed() {
   const [videoSrc, setVideoSrc] = useState(''); // Para armazenar o vídeo
   const [peopleCount, setPeopleCount] = useState(0); // Para armazenar a contagem de pessoas
 
@@ -34,5 +33,3 @@ function VideoFeed() {
     </div>
   );
 }
-
-export default VideoFeed;
