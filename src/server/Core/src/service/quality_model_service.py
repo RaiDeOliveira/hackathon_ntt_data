@@ -4,6 +4,8 @@ from src.MathematicalModel.QualityIndex import QualityIndex
 from src.models.repository.quality_model_repository import QualityRepository
 from src.models.repository.sensor_repository import SensorRepository
 import math
+from src.websocket.websocket_client import get_websocket_client
+
 
 quality_repository = QualityRepository()
 sensor_repository = SensorRepository()
@@ -60,19 +62,19 @@ def calculate_ibutg(temperature,humidity):
         return 0.7 * calculateWetBulb(temperature,humidity) + 0.3 * calculateGlobeTemperature(temperature)
     else: 
         return None
-def save_quality_data():
+def calcule_and_save_quality_data(armAngle,headAngle,current_peopleNumber):
     CURRENT_AREA =20
     current_lux =500
     current_noise = 50
-    current_peopleNumber =None
-    current_angle = {"braco": [], "cabeça": []}
-    quality_data = quality_repository.get_all_sensors()
+    current_peopleNumber =current_peopleNumber
+    current_angle = {"braco":armAngle, "cabeça": headAngle}
+    quality_data = quality_repository.get_all_quality()
     if len(quality_data)>0:
         sensor_data = [ {"ibutg":calculate_ibutg(i["temperature"],i["humidity"]),"humidity":i["humidity"],"timestamp":i["timestamp"]} for i in sensor_repository.get_all_sensors() if i["timestamp"] > quality_data[-1]["timestamp"]]
         for data in sensor_data:
              QIndex = calculate_Quality(current_angle,data["ibutg"],current_noise,data["humidity"],current_lux,current_peopleNumber,CURRENT_AREA)
-             ergonomics_index = QIndex.get_ErgonomicsIndex()
-             quality_index_value = QIndex.get_quality_index()
+             ergonomics_index = (1-QIndex.get_ErgonomicsIndex())*100
+             quality_index_value =(1-QIndex.get_quality_index())*100
              q_data = { "ibtug":data["ibutg"],"humidity":data["humidity"],
                        "lux":current_lux,
                        "noise":current_noise,
@@ -86,8 +88,8 @@ def save_quality_data():
         for data in sensor_data:
             quality_index = calculate_Quality(current_angle,data["ibutg"],current_noise,data["humidity"],current_lux,current_peopleNumber,CURRENT_AREA)
             QIndex = calculate_Quality(current_angle,data["ibutg"],current_noise,data["humidity"],current_lux,current_peopleNumber,CURRENT_AREA)
-            ergonomics_index = QIndex.get_ErgonomicsIndex()
-            quality_index_value = QIndex.get_quality_index()
+            ergonomics_index = (1-QIndex.get_ErgonomicsIndex())*100
+            quality_index_value = (1-QIndex.get_quality_index())*100
             q_data = { "ibtug":data["ibutg"],"humidity":data["humidity"],
                        "lux":current_lux,
                        "noise":current_noise,

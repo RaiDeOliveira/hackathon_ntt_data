@@ -102,7 +102,7 @@ tbb==2021.11.0
 
 tokenizers==0.19.1
 
-torch==2.3.1+cpu
+torch==2.3.0
 
 torchaudio==2.3.1+cpu
 

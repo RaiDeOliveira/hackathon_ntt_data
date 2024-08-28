@@ -30,7 +30,7 @@ class QualityRepository:
         database.session.rollback()
         raise exception
       
-  def get_all_sensors(self) -> List[Dict]:
+  def get_all_quality(self) -> List[Dict]:
     with db_connection_handler as database:
         try:
           sensors = database.session.query(Quality).all()

@@ -194,7 +194,7 @@ class QualityIndex:
     def get_quality_index(self):
         return self.quality_index
 # Definição dos parâmetros para o teste
-angulos_atuais = {"braco": [19], "cabeça": [9]}
+angulos_atuais = {"braco": [10], "cabeça": [1]}
 angulos_ideais = {"braco": 20, "cabeça": 10}
 angulos_maximos = {"braco": 45, "cabeça": 25}
 pesos_articulacoes = {"braco": 0.2, "cabeça": 0.2}
